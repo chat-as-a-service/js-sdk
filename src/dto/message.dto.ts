@@ -68,6 +68,7 @@ export interface LoadPreviousMessagesPayload {
   channel_uuid: string;
   first_message_uuid?: string;
   first_message_ts?: number;
+  parent_message_uuid?: string;
 }
 
 export interface LoadPreviousMessagesResponse {
@@ -84,3 +85,9 @@ export interface ListThreadPayload {
   channel_uuid: string;
   message_uuid: string;
 }
+
+export interface DeleteMessagePayload {
+  message_uuid: string;
+  channel_uuid: string;
+}
+

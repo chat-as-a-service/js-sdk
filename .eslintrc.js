@@ -14,6 +14,8 @@ module.exports = {
   rules: {
     'prettier/prettier': ['error'],
     'no-underscore-dangle': 'off',
+    '@typescript-eslint/lines-between-class-members': 'off',
+    'import/prefer-default-export': 'off',
   },
   root: true,
 };
