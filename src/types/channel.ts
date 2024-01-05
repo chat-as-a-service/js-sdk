@@ -1,17 +1,10 @@
 import { Socket } from 'socket.io-client';
 import { CustomResponse } from '../dto/common.dto';
-import {
-  AttachmentEntity,
-  CreateMessageReq,
-  MessageType,
-} from '../dto/message.dto';
+import { AttachmentEntity, CreateMessageReq, DeleteMessagePayload, MessageType } from '../dto/message.dto';
 import { MessageCollection } from './messageCollection';
-import {
-  NewAttachmentUploadSignedUrlPayload,
-  NewAttachmentUploadSignedUrlResponse,
-} from '../dto/attachment.dto';
-import { Attachment } from './attachment'; // import axios from 'axios';
-// import axios from 'axios';
+import { NewAttachmentUploadSignedUrlPayload, NewAttachmentUploadSignedUrlResponse } from '../dto/attachment.dto';
+import { Attachment } from './attachment';
+import { MemberListQuery } from './memberListQuery';
 
 export type MessageCreateParams = {
   message: string;
@@ -36,6 +29,19 @@ export type RequestAttachmentUploadSignedUrlParams = {
   fileName: string;
   fileType: string;
   fileContentLength: number;
+};
+
+export type MemberListQueryParams = {
+  limit: number;
+  order: 'MEMBER_NICKNAME_ALPHABETICAL' | 'OPERATOR_THEN_MEMBER_ALPHABETICAL';
+};
+
+export type ChannelMember = {
+  username: string;
+  nickname: string;
+  isOnline: boolean;
+  isOperator: boolean;
+  lastSeenAt?: number;
 };
 
 export class Channel {
@@ -164,5 +170,34 @@ export class Channel {
         },
       );
     });
+  }
+
+  async deleteMessage(messageUuid: string): Promise<void> {
+    const payload: DeleteMessagePayload = {
+      channel_uuid: this.uuid,
+      message_uuid: messageUui,
+    };
+    return new Promise((resolve, reject) => {
+      this.socket.emit(
+        'message:delete',
+        payload,
+        (res: CustomResponse<void>) => {
+          if (res.result !== 'success') {
+            reject(new Error(res.error_msg));
+          } else {
+            resolve();
+          }
+        ,
+      );
+    });
+  }
+
+  createMemberListQuery(params: MemberListQueryParams) {
+    return new MemberListQuery(
+      this.socket,
+      this.uuid,
+      params.limit,
+      params.orde,
+    );
   }
 }

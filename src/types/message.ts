@@ -1,6 +1,11 @@
-import { ListThreadPayload, MessageType } from '../dto/message.dto';
+import {
+  LoadPreviousMessagesPayload,
+  LoadPreviousMessagesResponse,
+  MessageType,
+} from '../dto/message.dto';
 import { Socket } from 'socket.io-client';
 import { CustomResponse } from '../dto/common.dto';
+import { ReactionPayload } from '../dto/reaction.dto';
 
 type User = {
   username: string;
@@ -54,24 +59,46 @@ export class Message {
   }
 
   getThreadedMessagesByTimestamp(
-    params: ThreadedMessageListParams,
+    timestamp: number,
+    params?: ThreadedMessageListParams,
   ): Promise<MessageType[]> {
-    const payload: ListThreadPayload = {
+    const payload: LoadPreviousMessagesPayload = {
       channel_uuid: this.channelUuid,
-      message_uuid: this.uuid,
+      first_message_ts: timestamp,
+      parent_message_uuid: this.uuid,
     };
     return new Promise((resolve, reject) => {
       this.socket.emit(
-        'message:list-thread',
+        'message:load-previous',
         payload,
-        (res: CustomResponse<MessageType[]>) => {
+        (res: CustomResponse<LoadPreviousMessagesResponse>) => {
           if (res.result !== 'success' || !res.data) {
             reject(res.error_msg);
             return;
           }
-          resolve(res.data);
+          resolve(res.data.messages);
         },
       );
     });
+  }
+
+  addReaction(reaction: string) {
+    const payload: ReactionPayload = {
+      channel_uuid: this.channelUuid,
+      message_uuid: this.uuid,
+      reaction,
+      op: 'add',
+    };
+    this.socket.emit('reaction:create-or-delete', payload);
+  }
+
+  deleteReaction(reaction: string) {
+    const payload: ReactionPayload = {
+      channel_uuid: this.channelUuid,
+      message_uuid: this.uuid,
+      reaction,
+      op: 'delete',
+    };
+    this.socket.emit('reaction:create-or-delete', payload);
   }
 }

@@ -12,6 +12,7 @@ const DEFAULT_NEXT_RESULT_LIMIT = 100;
 export type MessageCollectionEventHandler = {
   onMessagesReceived?: (channel: Channel, messages: MessageType[]) => void;
   onMessagesUpdated?: (channel: Channel, messages: MessageType[]) => void;
+  onMessageDeleted?: (channel: Channel, messageUuid: string) => void;
 };
 
 export class MessageCollection {
@@ -26,6 +27,7 @@ export class MessageCollection {
 
   private _newMessageListener?: (message: MessageType) => void;
   private _updateMessageListener?: (message: MessageType) => void;
+  private _deleteMessageListener?: (messageUuid: string) => void;
 
   private _messages: MessageType[] = [];
 
@@ -76,7 +78,13 @@ export class MessageCollection {
       this._updateMessageListener = (message: MessageType) => {
         eventHandler.onMessagesUpdated?.(this.channel, [message]);
       };
-      this.channel.socket.on('message:new', this._updateMessageListener);
+      this.channel.socket.on('message:updated', this._updateMessageListener);
+    }
+    if (eventHandler.onMessageDeleted != null) {
+      this._deleteMessageListener = messageUuid => {
+        eventHandler.onMessageDeleted?.(this.channel, messageUuid);
+      };
+      this.channel.socket.on('message:deleted', this._deleteMessageListener);
     }
   }
 
